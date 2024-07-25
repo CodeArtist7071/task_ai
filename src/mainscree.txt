@@ -1,0 +1,58 @@
+import React, { useEffect, useState } from 'react';
+import { Button, FlatList, Text, TextInput, View } from 'react-native';
+import { getData, storeData } from '../utils/AsyncStorage';
+
+const Mainscreen = () => {
+  const [task, setTask] = useState<string>('');
+  const [savedData, setSavedData] = useState<Array<any>|[]>([]);
+  
+  useEffect(() => {
+    const taskFetching = async () => {
+      try {
+        const data = await getData();
+        setSavedData(data)
+      } catch (e) {
+        console.error('Error fetching data', e);
+        
+      }
+    };
+    taskFetching();
+  }, []);
+
+  const addTask = async () => {
+    const uid = Date.now();
+    const newTask = {
+      id: uid,
+      task,
+      completed: false,
+    };
+    const updatedTasks = [...savedData, newTask];
+    setSavedData(updatedTasks);
+    await storeData(updatedTasks);
+    setTask(''); // Clear the input after adding the task
+  };
+
+  return (
+    <View style={{ padding: 20 }}>
+      <TextInput
+        value={task}
+        onChangeText={setTask}
+        placeholder="Enter task"
+        style={{ borderColor: 'gray', borderWidth: 1, marginBottom: 10, padding: 5 }}
+      />
+      <Button title='Save' onPress={addTask} />
+      <FlatList
+        data={savedData}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => 
+          <>
+          <Text>{item.id}</Text>
+          <Text style={{ padding: 5 }}>{item.task}</Text>
+          </>
+        }
+      />
+    </View>
+  );
+};
+
+export default Mainscreen;
